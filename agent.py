@@ -20,8 +20,7 @@ import json
 import re
 import time
 
-import anthropic
-from anthropic import Anthropic
+from openai import OpenAI
 
 import config
 import tools
