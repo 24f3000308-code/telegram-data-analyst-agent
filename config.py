@@ -23,14 +23,17 @@ def _require(name: str) -> str:
 
 # --- required ---
 TELEGRAM_BOT_TOKEN = _require("TELEGRAM_BOT_TOKEN")
-ANTHROPIC_API_KEY = _require("ANTHROPIC_API_KEY")
+OPENAI_API_KEY = _require("OPENAI_API_KEY")
 
 # --- public URL of THIS deployment, used to build log_url ---
 # e.g. https://my-agent.onrender.com  (no trailing slash)
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "http://localhost:8080").rstrip("/")
 
 # --- model / agent behaviour ---
-CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-6")
+OPENAI_MODEL = os.environ.get(
+    "OPENAI_MODEL",
+    "gpt-5-mini"
+)
 MAX_AGENT_STEPS = int(os.environ.get("MAX_AGENT_STEPS", "14"))
 MAX_TOKENS = int(os.environ.get("MAX_TOKENS", "4096"))
 TOOL_TIMEOUT_SECONDS = int(os.environ.get("TOOL_TIMEOUT_SECONDS", "45"))
