@@ -19,10 +19,14 @@ just go quiet on the grading account.
 
 import http.server
 import json
+import re
 import socketserver
 import sys
 import threading
 import time
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from openai import OpenAI
 from telegram import Update
@@ -117,6 +121,31 @@ def _call_model_with_retries(messages: list[dict], log):
     raise RuntimeError(f"model call failed after {config.API_MAX_RETRIES} retries: {last_err}")
 
 
+def _coerce_json(text: str, log) -> str:
+    """Best-effort cleanup so the reply is always valid, single-object JSON.
+
+    The system prompt asks for bare JSON, but models occasionally wrap it in
+    ```json fences or a leading/trailing sentence. This strips fences and
+    extracts the outermost {...} span; if the result still doesn't parse, or
+    is missing log_url, we patch/replace as needed rather than shipping
+    something the grader's json.loads() would choke on.
+    """
+    stripped = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip(), flags=re.MULTILINE).strip()
+
+    start, end = stripped.find("{"), stripped.rfind("}")
+    candidate = stripped[start:end + 1] if start != -1 and end != -1 and end > start else stripped
+
+    try:
+        obj = json.loads(candidate)
+    except json.JSONDecodeError:
+        log("json_coerce_failed", raw=text[:2000])
+        return json.dumps({"answer": None, "log_url": config.LOG_URL})
+
+    if "log_url" not in obj:
+        obj["log_url"] = config.LOG_URL
+    return json.dumps(obj, ensure_ascii=False)
+
+
 def run_agent(chat_id: int, user_text: str) -> str:
     """Runs the full tool-use loop for one incoming message and returns the
     final reply text (expected to be a single JSON object)."""
@@ -137,8 +166,9 @@ def run_agent(chat_id: int, user_text: str) -> str:
             tool_calls = getattr(msg, "tool_calls", None)
 
             if not tool_calls:
-                final_text = (msg.content or "").strip()
-                log("run_final", step=step, reply=final_text)
+                raw_text = (msg.content or "").strip()
+                final_text = _coerce_json(raw_text, log)
+                log("run_final", step=step, raw_reply=raw_text, cleaned_reply=final_text)
                 break
 
             # record the assistant's tool-call turn, then execute each tool
