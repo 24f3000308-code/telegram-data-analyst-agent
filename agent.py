@@ -26,8 +26,9 @@ import config
 import tools
 from logger import make_run_logger, new_run_id
 
-client = Anthropic(api_key=config.ANTHROPIC_API_KEY)
-
+client = OpenAI(
+    api_key=config.OPENAI_API_KEY
+)
 SYSTEM_PROMPT = """\
 You are a meticulous, skeptical data analyst agent operating over Telegram.
 
