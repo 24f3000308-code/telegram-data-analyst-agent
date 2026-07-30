@@ -175,55 +175,59 @@ def fetch_url(url: str, max_bytes: int = 20_000_000) -> str:
 # Tool schemas handed to Claude
 # --------------------------------------------------------------------------
 
+
 TOOLS = [
     {
-        "name": "web_search",
-        "description": (
-            "Search the web (DuckDuckGo) to locate the current URL of a "
-            "public dataset (MOSPI, data.gov.in, RBI, NSO, census, etc.) or "
-            "to check facts. Returns up to max_results 'title / url / "
-            "snippet' entries."
-        ),
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "query": {"type": "string"},
-                "max_results": {"type": "integer", "default": 6},
-            },
-            "required": ["query"],
-        },
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "Search the web for datasets",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "max_results": {
+                        "type": "integer"
+                    }
+                },
+                "required": ["query"]
+            }
+        }
     },
     {
-        "name": "fetch_url",
-        "description": (
-            "Download a URL (CSV/XLS/XLSX/HTML/JSON/PDF) to a local cache "
-            "and return its local file path. Reuses the cache on repeat "
-            "calls with the same URL. Use the returned path in run_python "
-            "(e.g. pd.read_csv(path) or pd.read_excel(path))."
-        ),
-        "input_schema": {
-            "type": "object",
-            "properties": {"url": {"type": "string"}},
-            "required": ["url"],
-        },
+        "type": "function",
+        "function": {
+            "name": "fetch_url",
+            "description": "Download a public file",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    }
+                },
+                "required": ["url"]
+            }
+        }
     },
     {
-        "name": "run_python",
-        "description": (
-            "Execute a Python snippet in a sandboxed subprocess (30s CPU cap, "
-            "~1.5GB memory cap). Pre-imported: pandas as pd, numpy as np, "
-            "requests, BeautifulSoup from bs4, json, re, io, os. A variable "
-            "CACHE_DIR (string path) points at the shared download cache. "
-            "Only stdout/stderr are returned — print() everything you need "
-            "to see. No state persists between calls; re-load data each time "
-            "or write intermediate results to files under CACHE_DIR."
-        ),
-        "input_schema": {
-            "type": "object",
-            "properties": {"code": {"type": "string"}},
-            "required": ["code"],
-        },
-    },
+        "type": "function",
+        "function": {
+            "name": "run_python",
+            "description": "Run Python code for analysis",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    }
+                },
+                "required": ["code"]
+            }
+        }
+    }
 ]
 
 DISPATCH = {
