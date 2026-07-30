@@ -41,7 +41,29 @@ def answer_question(question, history=None):
 
     messages.append({"role": "user", "content": question})
 
-    response = _call_model(messages)
+    for step in range(MAX_AGENT_STEPS):
+
+    response = client.chat.completions.create(
+        ...
+        tools=tools.TOOLS,
+        tool_choice="auto"
+    )
+
+    message = response.choices[0].message
+
+    if message.tool_calls:
+
+        execute tools
+
+        append tool outputs
+
+        continue
+
+    else:
+
+        parse JSON
+
+        break
     text = response.choices[0].message.content
 
     try:
